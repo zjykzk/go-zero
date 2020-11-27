@@ -52,6 +52,8 @@ func handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logx.WithContext(r.Context()).Info("with trace id")
+
 	httpx.OkJson(w, "helllo, "+req.User)
 }
 
