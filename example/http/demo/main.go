@@ -6,6 +6,7 @@ import (
 
 	"github.com/tal-tech/go-zero/core/logx"
 	"github.com/tal-tech/go-zero/core/service"
+	"github.com/tal-tech/go-zero/core/trace/tracespec"
 	"github.com/tal-tech/go-zero/rest"
 	"github.com/tal-tech/go-zero/rest/httpx"
 )
@@ -29,6 +30,16 @@ func first(next http.HandlerFunc) http.HandlerFunc {
 func second(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("X-Middleware", "second")
+		next(w, r)
+	}
+}
+
+func third(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		trace := r.Context().Value(tracespec.TracingKey).(tracespec.Trace)
+		w.Header().Add("x-trace-id", trace.TraceId())
+		w.Header().Add("x-span-id", trace.SpanId())
 		next(w, r)
 	}
 }
@@ -61,6 +72,7 @@ func main() {
 
 	engine.Use(first)
 	engine.Use(second)
+	engine.Use(third)
 	engine.AddRoute(rest.Route{
 		Method:  http.MethodGet,
 		Path:    "/",
